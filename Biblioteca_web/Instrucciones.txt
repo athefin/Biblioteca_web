@@ -1,0 +1,10 @@
+Preparar el entorno
+uv venv
+uv pip install django psycopg[binary] python-dotenv
+
+Preparar la base de datos
+.\.venv\Scripts\python.exe manage.py makemigrations
+.\.venv\Scripts\python.exe manage.py migrate
+
+Arrancar el servidor
+\.venv\Scripts\python.exe manage.py runserver 8001
