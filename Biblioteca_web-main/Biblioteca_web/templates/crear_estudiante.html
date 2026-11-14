@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block titulo %}Registrar estudiante{% endblock %}
+
+{% block estilos %}
+<style>
+  .destacado__icono.inicial { font-family: var(--f-titulo); font-size: 26px; font-weight: 700; }
+  .destacado__texto strong.nombre { font-family: var(--f-titulo); font-size: 28px; line-height: 1.15; }
+  .destacado__texto .mono { font-size: 14.5px; color: var(--negro); }
+</style>
+{% endblock %}
+
+{% block contenido %}
+<a class="volver" href="{% url 'lista_estudiantes' %}"><svg class="ic"><use href="#i-flecha-izq"/></svg>Volver a estudiantes</a>
+<h1 class="titulo titulo--form">Registrar estudiante</h1>
+<p class="bajada bajada--form">Ingresa los datos del estudiante. Una vez registrado podrá reportar fallas en los computadores y salas de la biblioteca.</p>
+
+{% if form.non_field_errors %}<div class="alerta">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+
+<form method="post" class="pasos">
+  {% csrf_token %}
+
+  <!-- Paso 1: datos del formulario -->
+  <section class="tarjeta paso">
+    <h2 class="paso__titulo"><span class="paso__num">1</span>Datos del estudiante</h2>
+
+    <div class="campo">
+      <label for="{{ form.rut.id_for_label }}">RUT</label>
+      <input type="text" name="{{ form.rut.html_name }}" id="{{ form.rut.id_for_label }}" class="form-control" maxlength="{{ form.rut.field.max_length }}" placeholder="12.345.678-9" required value="{{ form.rut.value|default_if_none:'' }}">
+      {% for error in form.rut.errors %}<p class="error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="campo">
+      <label for="{{ form.nombre.id_for_label }}">Nombre completo</label>
+      <input type="text" name="{{ form.nombre.html_name }}" id="{{ form.nombre.id_for_label }}" class="form-control" maxlength="{{ form.nombre.field.max_length }}" placeholder="Nombre y apellido" required value="{{ form.nombre.value|default_if_none:'' }}">
+      {% for error in form.nombre.errors %}<p class="error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="campo">
+      <label for="{{ form.carrera.id_for_label }}">Carrera</label>
+      <input type="text" name="{{ form.carrera.html_name }}" id="{{ form.carrera.id_for_label }}" class="form-control" maxlength="{{ form.carrera.field.max_length }}" placeholder="Por ejemplo, Ingeniería en Informática" required value="{{ form.carrera.value|default_if_none:'' }}">
+      {% for error in form.carrera.errors %}<p class="error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <p class="nota-info"><svg class="ic"><use href="#i-info"/></svg>El RUT no se puede repetir. Si ya existe un estudiante con ese RUT te vamos a avisar.</p>
+  </section>
+
+  <!-- Paso 2: vista previa y guardar -->
+  <section class="tarjeta paso">
+    <h2 class="paso__titulo"><span class="paso__num">2</span>Revisa y guarda</h2>
+
+    <div class="destacado">
+      <span class="destacado__icono inicial" id="previa-inicial">?</span>
+      <div class="destacado__texto">
+        <small>Ficha del estudiante</small>
+        <strong class="nombre" id="previa-nombre">Nombre del estudiante</strong>
+        <span><span class="mono" id="previa-rut">RUT</span> · <span id="previa-carrera">Carrera</span></span>
+      </div>
+    </div>
+
+    <p class="nota-usuario"><svg class="ic"><use href="#i-usuario"/></svg>Revisa que el RUT y el nombre estén bien escritos antes de guardar.</p>
+
+    <div class="acciones">
+      <button type="submit" class="btn btn-primario"><svg class="ic"><use href="#i-guardar"/></svg>Guardar estudiante</button>
+      <a class="btn btn-borde" href="{% url 'lista_estudiantes' %}">Cancelar</a>
+    </div>
+  </section>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // La ficha de la derecha se actualiza mientras se escribe
+  (function () {
+    var rut = document.getElementById('id_rut');
+    var nombre = document.getElementById('id_nombre');
+    var carrera = document.getElementById('id_carrera');
+
+    function actualizar() {
+      var n = nombre.value.trim();
+      document.getElementById('previa-nombre').textContent = n || 'Nombre del estudiante';
+      document.getElementById('previa-inicial').textContent = n ? n.charAt(0).toUpperCase() : '?';
+      document.getElementById('previa-rut').textContent = rut.value.trim() || 'RUT';
+      document.getElementById('previa-carrera').textContent = carrera.value.trim() || 'Carrera';
+    }
+    [rut, nombre, carrera].forEach(function (campo) { campo.addEventListener('input', actualizar); });
+    actualizar();
+  })();
+</script>
+{% endblock %}

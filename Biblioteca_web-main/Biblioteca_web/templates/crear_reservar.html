@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block titulo %}Reservar Sala{% endblock %}
+{% block contenido %}
+<div class="tarjeta" style="max-width: 600px; margin: 40px auto; padding: 30px;">
+    <h1 class="titulo">Reservar Sala</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primario" style="margin-top: 20px; width: 100%;">Confirmar Reserva</button>
+    </form>
+</div>
+{% endblock %}

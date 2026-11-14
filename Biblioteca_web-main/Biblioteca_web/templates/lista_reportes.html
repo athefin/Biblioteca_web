@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block titulo %}Reportes{% endblock %}
+
+{% block estilos %}
+<style>
+  .bandeja { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 22px; align-items: start; }
+  .problema { line-height: 1.35; min-width: 200px; }
+  .fecha { white-space: nowrap; }
+
+  .detalle { padding: 24px 23px 23px; position: sticky; top: 24px; }
+  .detalle__cabeza { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .detalle__cabeza .mono { font-size: 16px; color: var(--gris-texto); margin-right: 4px; }
+  .detalle h2 { font-family: var(--f-titulo); font-weight: 700; font-size: 30px; line-height: 1.05; margin: 18px 0 10px; }
+  .detalle__meta { font-size: 15px; line-height: 1.5; color: var(--gris-texto); }
+  .ficha { background: var(--superficie); border-radius: 12px; padding: 4px 16px; margin: 20px 0 22px; }
+  .ficha div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--linea); }
+  .ficha div:last-child { border-bottom: 0; }
+  .ficha dt { font-size: 14px; color: var(--gris-texto); }
+  .ficha dd { font-size: 15px; font-weight: 600; text-align: right; }
+  .ficha dd.mono { font-size: 14.5px; }
+  .nota { background: var(--crema); border-radius: 12px; padding: 15px 16px 17px; }
+  .nota__titulo { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; font-size: 14px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--naranjo-texto); }
+  .nota__titulo .ic { width: 17px; height: 17px; }
+  .nota__texto { font-size: 16px; line-height: 1.5; overflow-wrap: anywhere; }
+  .detalle__acciones { display: flex; gap: 11px; margin-top: 18px; }
+  .detalle__acciones .btn { flex: 1; padding: 0 14px; }
+  .detalle--vacio { padding: 28px 24px; text-align: center; color: var(--gris-texto); }
+</style>
+{% endblock %}
+
+{% block contenido %}
+{% now "Ymd" as hoy %}
+<div data-filtrable>
+
+  <header class="encabezado">
+    <div>
+      <p class="antetitulo">Administración · {% now "l j \d\e F" %}</p>
+      <h1 class="titulo">Bandeja de reportes</h1>
+      <p class="bajada">Fallas informadas por los estudiantes en computadores y salas de estudio</p>
+    </div>
+    <div class="buscador">
+      <label for="buscar">Buscar reporte</label>
+      <div class="buscador__campo">
+        <svg class="ic"><use href="#i-buscar"/></svg>
+        <input id="buscar" type="search" placeholder="Equipo, estudiante o número" data-buscar>
+      </div>
+    </div>
+  </header>
+
+  <div class="filtros">
+    <button type="button" class="filtro activo" data-filtro="todos">Todos <span class="cuenta" data-contar="[data-fila]">0</span></button>
+    <button type="button" class="filtro" data-filtro="pendiente">Pendientes <span class="cuenta menta" data-contar='[data-grupo="pendiente"]'>0</span></button>
+    <button type="button" class="filtro" data-filtro="resuelto">Resueltos <span class="cuenta" data-contar='[data-grupo="resuelto"]'>0</span></button>
+  </div>
+
+  {# Del más reciente al más antiguo #}
+  {% with lista=reportes|dictsortreversed:"fecha_reporte" %}
+  <div class="bandeja">
+
+    <section class="tarjeta tabla-tarjeta">
+      <table class="tabla tabla--interactiva">
+        <thead>
+          <tr>
+            <th>Reporte</th>
+            <th>Equipo</th>
+            <th>Problema y origen</th>
+            <th>Equipo hoy</th>
+            <th>Estado</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in lista %}
+          <tr data-fila data-id="{{ r.id }}" data-grupo="{% if r.resuelto %}resuelto{% else %}pendiente{% endif %}" tabindex="0" {% if forloop.first %}class="seleccionada"{% endif %}>
+            <td class="mono">#{{ r.id|stringformat:"04d" }}</td>
+            <td>
+              <span class="mono">{{ r.recurso.identificador }}</span>
+              <div class="celda-sub">{% if r.recurso.tipo == "PC" %}Piso {{ r.recurso.identificador|slice:"1:2" }}{% else %}Sala de estudio{% endif %}</div>
+            </td>
+            <td>
+              <div class="problema">{{ r.descripcion_falla|truncatechars:48 }}</div>
+              <div class="celda-sub"><svg class="ic"><use href="#i-usuario"/></svg>{{ r.estudiante.nombre }}</div>
+            </td>
+            <td>
+              {% if r.recurso.estado == "DISPONIBLE" %}<span class="etiqueta et-borde">Libre</span>
+              {% elif r.recurso.estado == "OCUPADO" %}<span class="etiqueta et-gris">En uso</span>
+              {% else %}<span class="etiqueta et-naranjo">Mantención</span>{% endif %}
+            </td>
+            <td>
+              {% if r.resuelto %}<span class="etiqueta et-borde"><svg class="ic"><use href="#i-check"/></svg>Resuelto</span>
+              {% else %}<span class="etiqueta et-menta">Pendiente</span>{% endif %}
+            </td>
+            <td>
+              <div class="fecha">{% if r.fecha_reporte|date:"Ymd" == hoy %}Hoy{% else %}{{ r.fecha_reporte|date:"d b" }}{% endif %}</div>
+              <div class="celda-sub">{{ r.fecha_reporte|time:"H:i" }}</div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="vacio">Todavía no hay reportes. <a href="{% url 'crear_reporte' %}">Crear el primero</a></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="tabla-pie">
+        <span>Mostrando <span data-mostrando>{{ lista|length }}</span> reportes</span>
+        <span>Del más reciente al más antiguo</span>
+      </div>
+    </section>
+
+    <!-- Panel con el detalle del reporte seleccionado -->
+    <aside>
+      {% for r in lista %}
+      <article class="tarjeta detalle" id="detalle-{{ r.id }}" {% if not forloop.first %}hidden{% endif %}>
+        <div class="detalle__cabeza">
+          <span class="mono">#{{ r.id|stringformat:"04d" }}</span>
+          {% if r.resuelto %}<span class="etiqueta et-borde"><svg class="ic"><use href="#i-check"/></svg>Resuelto</span>
+          {% else %}<span class="etiqueta et-menta">Pendiente</span>{% endif %}
+          {% if r.recurso.estado == "MANTENCION" %}<span class="etiqueta et-naranjo">Equipo en mantención</span>{% endif %}
+        </div>
+
+        <h2>Falla en {{ r.recurso.identificador }}</h2>
+        <p class="detalle__meta">
+          Reportado por {{ r.estudiante.nombre }}, {{ r.estudiante.carrera }},
+          {% if r.fecha_reporte|date:"Ymd" == hoy %}hoy{% else %}el {{ r.fecha_reporte|date:"j \d\e F" }}{% endif %}
+          a las {{ r.fecha_reporte|time:"H:i" }}
+        </p>
+
+        <dl class="ficha">
+          <div><dt>Equipo</dt><dd class="mono">{{ r.recurso.identificador }}</dd></div>
+          <div><dt>Tipo</dt><dd>{{ r.recurso.get_tipo_display }}</dd></div>
+          <div><dt>Ubicación</dt><dd>{% if r.recurso.tipo == "PC" %}Piso {{ r.recurso.identificador|slice:"1:2" }}{% else %}Sala de estudio{% endif %}</dd></div>
+          <div><dt>Estado del equipo</dt><dd>{{ r.recurso.get_estado_display }}</dd></div>
+          <div><dt>RUT del estudiante</dt><dd class="mono">{{ r.estudiante.rut }}</dd></div>
+          <div><dt>Fecha del reporte</dt><dd>{{ r.fecha_reporte|date:"D j b, H:i"|capfirst }}</dd></div>
+        </dl>
+
+        <div class="nota">
+          <p class="nota__titulo"><svg class="ic"><use href="#i-mensaje"/></svg>Detalle de la falla</p>
+          <p class="nota__texto">{{ r.descripcion_falla|linebreaksbr }}</p>
+        </div>
+
+        <div class="detalle__acciones">
+          <a class="btn btn-primario" href="{% url 'admin:Biblioteca_web_reporteincidencia_change' r.id %}"><svg class="ic"><use href="#i-llave"/></svg>Gestionar</a>
+          <a class="btn btn-borde" href="{% url 'crear_reporte' %}"><svg class="ic"><use href="#i-mas"/></svg>Nuevo reporte</a>
+        </div>
+      </article>
+      {% empty %}
+      <article class="tarjeta detalle detalle--vacio">Cuando llegue un reporte vas a ver su detalle acá.</article>
+      {% endfor %}
+    </aside>
+
+  </div>
+  {% endwith %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Al hacer clic en una fila se muestra su detalle en el panel derecho
+  (function () {
+    var filas = document.querySelectorAll('.tabla--interactiva [data-fila]');
+    function seleccionar(fila) {
+      filas.forEach(function (f) { f.classList.remove('seleccionada'); });
+      fila.classList.add('seleccionada');
+      document.querySelectorAll('.detalle[id]').forEach(function (panel) {
+        panel.hidden = panel.id !== 'detalle-' + fila.dataset.id;
+      });
+    }
+    filas.forEach(function (fila) {
+      fila.addEventListener('click', function () { seleccionar(fila); });
+      fila.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); seleccionar(fila); }
+      });
+    });
+  })();
+</script>
+{% endblock %}

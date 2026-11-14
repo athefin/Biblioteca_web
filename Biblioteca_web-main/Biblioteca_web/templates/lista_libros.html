@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block titulo %}Catálogo de Libros{% endblock %}
+
+{% block contenido %}
+<h1 class="titulo">Catálogo de Libros</h1>
+<p class="bajada">Explora los libros disponibles y deja tu reseña.</p>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; margin-top: 30px;">
+    {% for libro in libros %}
+    <div class="tarjeta" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+            <h3 style="font-family: var(--f-titulo); font-size: 24px; margin-bottom: 5px;">{{ libro.titulo }}</h3>
+            <p style="color: var(--gris-texto); margin-bottom: 15px;">Por: {{ libro.autor }}</p>
+            
+            <!-- Texto de lectura de ejemplo -->
+            <div style="background: var(--superficie); padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; font-style: italic; border-left: 3px solid var(--rojo);">
+                "Este es un fragmento de ejemplo del libro..."
+            </div>
+        </div>
+        
+        <!-- SECCIÓN DE RESEÑAS -->
+        <div style="margin-top: 15px; border-top: 1px solid var(--borde); padding-top: 15px; margin-bottom: 15px;">
+            <h4 style="font-size: 14px; margin-bottom: 10px; color: var(--gris-texto); display: flex; justify-content: space-between;">
+                <span>Reseñas</span>
+                <!-- Contador de reseñas -->
+                <span style="background: var(--linea); padding: 2px 8px; border-radius: 10px; font-size: 12px;">{{ libro.reseña_set.count }}</span>
+            </h4>
+            
+            <div style="max-height: 150px; overflow-y: auto;">
+                {% for resena in libro.reseña_set.all %}
+                    <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 8px; font-size: 13px; border: 1px solid #eee;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <strong>{{ resena.estudiante.nombre }}</strong>
+                            
+                            <!-- Botón de eliminar (solo si es Admin o el dueño) -->
+                            {% if request.user.groups.all.0.name == 'Administrativo' or request.user == resena.estudiante.user %}
+                                <form method="POST" action="{% url 'eliminar_resena' resena.id %}" style="margin: 0;">
+                                    {% csrf_token %}
+                                    <button type="submit" style="background: none; border: none; color: var(--rojo); cursor: pointer; font-size: 11px; padding: 0;">✖ Eliminar</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                        <p style="margin: 5px 0 0 0; color: #444;">"{{ resena.texto }}"</p>
+                    </div>
+                {% empty %}
+                    <p style="font-size: 13px; color: var(--gris-texto); margin: 0;">Sé el primero en dejar una reseña.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <a href="{% url 'crear_resena' %}?libro={{ libro.id }}" class="btn btn-primario" style="width: 100%; margin-top: auto;">Escribir Reseña</a>
+    </div>
+    {% empty %}
+    <p>No hay libros registrados aún. (Ejecuta `/poblar/` para crear libros de prueba)</p>
+    {% endfor %}
+</div>
+{% endblock %}

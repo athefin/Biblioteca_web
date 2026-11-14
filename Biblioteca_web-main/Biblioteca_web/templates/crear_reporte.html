@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block titulo %}Reportar falla{% endblock %}
+
+{% block estilos %}
+<style>
+  .zona-equipos { background: var(--superficie); border-radius: 12px; padding: 16px; }
+  .zona-equipos__titulo {
+    height: 33px; border-radius: 6px; background: var(--linea);
+    display: grid; place-items: center; margin-bottom: 13px;
+    font-size: 13.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--gris-texto);
+  }
+  .selector-equipos { display: grid; grid-template-columns: repeat(6, 1fr); gap: 9px; }
+  .opcion-equipo { position: relative; }
+  .opcion-equipo input { position: absolute; inset: 0; opacity: 0; margin: 0; pointer-events: none; }
+  .opcion-equipo span {
+    height: 59px; border-radius: 6px; cursor: pointer;
+    display: grid; place-items: center;
+    background: #fff; border: 1.5px solid var(--borde);
+    font-family: var(--f-mono); font-weight: 600; font-size: 13px; white-space: nowrap;
+    transition: border-color .12s;
+  }
+  .opcion-equipo span:hover { border-color: var(--gris-claro); }
+  .opcion-equipo input:checked + span { background: var(--rojo); color: #fff; border: 2px solid var(--negro); box-shadow: 0 0 0 4px var(--rojo-halo); }
+  .opcion-equipo input:focus-visible + span { outline: 2px solid var(--negro); outline-offset: 2px; }
+  .opcion-equipo input:disabled + span { background: var(--rayado); color: #fff; border-color: transparent; cursor: not-allowed; }
+  .leyenda--form { gap: 28px; margin-top: 22px; font-size: 14.5px; }
+  .contador { text-align: right; font-size: 12.5px; color: var(--gris-texto); margin-top: 7px; }
+  .sin-equipos { padding: 28px 16px; text-align: center; color: var(--gris-texto); background: var(--superficie); border-radius: 12px; }
+  .sin-equipos a { color: var(--rojo); font-weight: 600; text-decoration: underline; }
+
+  @media (max-width: 700px) {
+    .selector-equipos { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+{% endblock %}
+
+{% block contenido %}
+<a class="volver" href="{% url 'lista_recursos' %}"><svg class="ic"><use href="#i-flecha-izq"/></svg>Volver a disponibilidad</a>
+<h1 class="titulo titulo--form">Reportar una falla</h1>
+<p class="bajada bajada--form">Selecciona el computador que presenta problemas y cuéntanos qué ocurre. El personal de biblioteca revisa cada reporte.</p>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alerta" style="margin-bottom: 20px;">
+      <svg class="ic" style="margin-right: 8px; vertical-align: middle;"><use href="#i-alerta"/></svg>
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+
+{% if form.non_field_errors %}<div class="alerta">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+
+<form method="post" id="form-reporte">
+  {% csrf_token %}
+  <div class="pasos">
+
+    <!-- Paso 1: elegir el equipo (campo "recurso" del formulario) -->
+    <section class="tarjeta paso">
+      <h2 class="paso__titulo"><span class="paso__num">1</span>Elige el equipo</h2>
+
+      {% regroup form.fields.recurso.queryset|dictsort:"tipo" by tipo as por_tipo %}
+      {% with grupo_pc=por_tipo|first grupo_sala=por_tipo|last %}
+      {% if grupo_pc.grouper == "PC" %}
+        {% regroup grupo_pc.list|dictsort:"identificador" by identificador|slice:":2" as pisos %}
+      {% endif %}
+
+      {% if por_tipo %}
+        <div class="campo">
+          <label for="piso">Piso</label>
+          <select id="piso" class="form-control">
+            {% for piso in pisos %}<option value="{{ piso.grouper }}">Piso {{ piso.grouper|slice:"1:" }}</option>{% endfor %}
+            {% if grupo_sala.grouper == "SALA" %}<option value="SALAS">Salas de estudio</option>{% endif %}
+          </select>
+        </div>
+
+        {% for piso in pisos %}
+        <div class="zona-equipos" data-piso="{{ piso.grouper }}">
+          <p class="zona-equipos__titulo">Piso {{ piso.grouper|slice:"1:" }} · {{ piso.list|length }} computador{{ piso.list|length|pluralize:"es" }}</p>
+          <div class="selector-equipos">
+            {% for pc in piso.list %}
+            <label class="opcion-equipo" title="{{ pc.get_estado_display }}">
+              <input type="radio" name="{{ form.recurso.html_name }}" value="{{ pc.pk }}" data-codigo="{{ pc.identificador }}" data-ubicacion="Piso {{ piso.grouper|slice:'1:' }}" {% if form.recurso.value|stringformat:"s" == pc.pk|stringformat:"s" %}checked{% endif %} {% if pc.estado == "MANTENCION" %}disabled{% endif %}>
+              <span>{{ pc.identificador }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+
+        {% if grupo_sala.grouper == "SALA" %}
+        <div class="zona-equipos" data-piso="SALAS">
+          <p class="zona-equipos__titulo">Salas de estudio · {{ grupo_sala.list|length }} sala{{ grupo_sala.list|length|pluralize }}</p>
+          <div class="selector-equipos">
+            {% for sala in grupo_sala.list|dictsort:"identificador" %}
+            <label class="opcion-equipo" title="{{ sala.get_estado_display }}">
+              <input type="radio" name="{{ form.recurso.html_name }}" value="{{ sala.pk }}" data-codigo="{{ sala.identificador }}" data-ubicacion="Sala de estudio grupal" {% if form.recurso.value|stringformat:"s" == sala.pk|stringformat:"s" %}checked{% endif %} {% if sala.estado == "MANTENCION" %}disabled{% endif %}>
+              <span>{{ sala.identificador }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      {% else %}
+        <p class="sin-equipos">Todavía no hay equipos registrados. <a href="{% url 'crear_recurso' %}">Agregar recurso</a></p>
+      {% endif %}
+      {% endwith %}
+
+      {% if form.recurso.errors %}<p class="error">Elige un equipo antes de enviar el reporte.</p>{% endif %}
+
+      <div class="leyenda leyenda--form">
+        <span><i class="muestra sel"></i>Seleccionado</span>
+        <span><i class="muestra disp"></i>Disponible para reportar</span>
+        <span><i class="muestra fuera"></i>En mantención</span>
+      </div>
+      <p class="nota-info"><svg class="ic"><use href="#i-info"/></svg>El código del equipo aparece en la etiqueta pegada sobre el monitor.</p>
+    </section>
+
+    <!-- Paso 2: describir el problema (campos "estudiante" y "descripcion_falla") -->
+    <section class="tarjeta paso">
+      <h2 class="paso__titulo"><span class="paso__num">2</span>Describe el problema</h2>
+
+      <div class="destacado">
+        <span class="destacado__icono"><svg class="ic"><use href="#i-monitor"/></svg></span>
+        <div class="destacado__texto">
+          <small>Equipo seleccionado</small>
+          <strong id="equipo-codigo">—</strong>
+          <span id="equipo-ubicacion">Elige un equipo en el paso 1</span>
+        </div>
+      </div>
+
+      {# El tipo de falla no es un campo del modelo: se guarda al inicio de la descripción #}
+      <div class="campo">
+        <span class="campo__etiqueta">Tipo de falla</span>
+        <div class="chips">
+          <label class="chip"><input type="radio" name="tipo_falla" value="No enciende"><span><svg class="ic"><use href="#i-check"/></svg>No enciende</span></label>
+          <label class="chip"><input type="radio" name="tipo_falla" value="Sin internet"><span><svg class="ic"><use href="#i-check"/></svg>Sin internet</span></label>
+          <label class="chip"><input type="radio" name="tipo_falla" value="Pantalla"><span><svg class="ic"><use href="#i-check"/></svg>Pantalla</span></label>
+          <label class="chip"><input type="radio" name="tipo_falla" value="Teclado o mouse"><span><svg class="ic"><use href="#i-check"/></svg>Teclado o mouse</span></label>
+          <label class="chip"><input type="radio" name="tipo_falla" value="Programas"><span><svg class="ic"><use href="#i-check"/></svg>Programas</span></label>
+          <label class="chip"><input type="radio" name="tipo_falla" value="Otro"><span><svg class="ic"><use href="#i-check"/></svg>Otro</span></label>
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="{{ form.descripcion_falla.id_for_label }}">Describe lo que ocurre</label>
+        <textarea name="{{ form.descripcion_falla.html_name }}" id="{{ form.descripcion_falla.id_for_label }}" class="form-control" rows="3" maxlength="500" required placeholder="Por ejemplo, el computador enciende pero no carga ninguna página.">{{ form.descripcion_falla.value|default_if_none:"" }}</textarea>
+        <p class="contador" id="contador">0 / 500 caracteres</p>
+        {% for error in form.descripcion_falla.errors %}<p class="error">{{ error }}</p>{% endfor %}
+      </div>
+
+      <p class="nota-usuario"><svg class="ic"><use href="#i-usuario"/></svg><span>El reporte queda registrado a nombre de <span id="nombre-estudiante">quien elijas arriba</span>.</span></p>
+
+      <div class="acciones">
+        <button type="submit" class="btn btn-primario">Enviar reporte <svg class="ic"><use href="#i-enviar"/></svg></button>
+        <a class="btn btn-borde" href="{% url 'lista_recursos' %}">Cancelar</a>
+      </div>
+    </section>
+
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var form = document.getElementById('form-reporte');
+    var radios = form.querySelectorAll('input[name="recurso"]');
+    var selectorPiso = document.getElementById('piso');
+    var zonas = form.querySelectorAll('.zona-equipos');
+
+    // Muestra solo la grilla del piso elegido
+    function mostrarPiso(valor) {
+      zonas.forEach(function (zona) { zona.hidden = zona.dataset.piso !== valor; });
+    }
+    if (selectorPiso) {
+      var marcado = form.querySelector('input[name="recurso"]:checked');
+      if (marcado) { selectorPiso.value = marcado.closest('.zona-equipos').dataset.piso; }
+      mostrarPiso(selectorPiso.value);
+      selectorPiso.addEventListener('change', function () { mostrarPiso(this.value); });
+    }
+
+    // Recuadro "Equipo seleccionado"
+    function mostrarEquipo() {
+      var elegido = form.querySelector('input[name="recurso"]:checked');
+      if (elegido) {
+        document.getElementById('equipo-codigo').textContent = elegido.dataset.codigo;
+        document.getElementById('equipo-ubicacion').textContent = elegido.dataset.ubicacion;
+      }
+    }
+    radios.forEach(function (radio) { radio.addEventListener('change', mostrarEquipo); });
+    mostrarEquipo();
+
+    // Nombre de quien reporta
+    var estudiante = document.getElementById('id_estudiante');
+    function mostrarEstudiante() {
+      var opcion = estudiante.options[estudiante.selectedIndex];
+      document.getElementById('nombre-estudiante').textContent = estudiante.value ? opcion.dataset.nombre : 'quien elijas arriba';
+    }
+    estudiante.addEventListener('change', mostrarEstudiante);
+    mostrarEstudiante();
+
+    // Contador de caracteres
+    var texto = document.getElementById('id_descripcion_falla');
+    var contador = document.getElementById('contador');
+    function contar() { contador.textContent = texto.value.length + ' / ' + texto.maxLength + ' caracteres'; }
+    texto.addEventListener('input', contar);
+    contar();
+
+    // Al enviar, el tipo de falla elegido se agrega al inicio de la descripción
+    var tipos = Array.prototype.map.call(form.querySelectorAll('input[name="tipo_falla"]'), function (i) { return i.value; });
+    form.addEventListener('submit', function () {
+      var tipo = form.querySelector('input[name="tipo_falla"]:checked');
+      if (!tipo) { return; }
+      var descripcion = texto.value.trim();
+      tipos.forEach(function (t) {
+        if (descripcion.indexOf(t + ': ') === 0) { descripcion = descripcion.slice(t.length + 2); }
+      });
+      texto.value = tipo.value + ': ' + descripcion;
+    });
+  })();
+</script>
+{% endblock %}

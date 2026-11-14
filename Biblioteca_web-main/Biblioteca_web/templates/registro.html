@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block titulo %}Registro de Estudiante{% endblock %}
+{% block contenido %}
+<div class="tarjeta" style="max-width: 600px; margin: 40px auto; padding: 30px;">
+    <h1 class="titulo">Crear Cuenta</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primario" style="margin-top: 20px; width: 100%;">Registrarme</button>
+    </form>
+    <a href="{% url 'login' %}" style="display:block; text-align:center; margin-top: 15px;">Volver al Login</a>
+</div>
+{% endblock %}

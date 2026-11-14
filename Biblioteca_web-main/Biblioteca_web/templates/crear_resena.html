@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block titulo %}Escribir Reseña{% endblock %}
+
+{% block contenido %}
+<div class="tarjeta" style="max-width: 600px; margin: 40px auto; padding: 30px;">
+    <h1 class="titulo">Escribir Reseña</h1>
+    <p class="bajada">Comparte tu opinión sobre este libro.</p>
+
+    <!-- Aquí se mostrarán los errores si escribes lenguaje ofensivo -->
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alerta" style="margin-bottom: 20px; background: #fdeeee; color: #8f0000; padding: 10px; border-radius: 5px;">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post" style="margin-top: 20px;">
+        {% csrf_token %}
+        
+        <!-- Renderiza el formulario -->
+        <div class="campo">
+            {{ form.as_p }}
+        </div>
+
+        <button type="submit" class="btn btn-primario" style="margin-top: 20px; width: 100%;">Publicar Reseña</button>
+    </form>
+    
+    <a href="{% url 'lista_libros' %}" style="display:block; text-align:center; margin-top: 15px; color: var(--rojo); font-weight: 600;">Volver al catálogo</a>
+</div>
+{% endblock %}

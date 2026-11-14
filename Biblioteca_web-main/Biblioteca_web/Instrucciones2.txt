@@ -1,0 +1,84 @@
+#Revisar repositorio
+PS C:\Users\Alumno\Desktop\Biblioteca_web-main> dir
+
+Mode                 LastWriteTime         Length Name                                                                                                              
+----                 -------------         ------ ----                                                                                                              
+d-----        14-11-2026      2:24                Biblioteca_web
+
+
+#Entrar al repositorio correcto
+PS C:\Users\Alumno\Desktop\Biblioteca_web-main> cd Biblioteca_web
+
+
+#Revisar los archivos y carpetas
+PS C:\Users\Alumno\Desktop\Biblioteca_web-main\Biblioteca_web> dir
+
+    Directorio: C:\Users\Alumno\Desktop\Biblioteca_web-main\Biblioteca_web
+
+Mode                 LastWriteTime         Length Name                                                                                                              
+----                 -------------         ------ ----                                                                                                              
+d-----        14-11-2026      2:22                migrations                                                                                                        
+d-----        14-11-2026      2:22                templates                                                                                                         
+d-----        14-11-2026      2:24                venv                                                                                                              
+d-----        14-11-2026      2:26                __pycache__                                                                                                       
+-a----        14-11-2026      2:22            137 .env                                                                                                              
+-a----        14-11-2026      2:22            670 admin.py                                                                                                          
+-a----        14-11-2026      2:22            157 apps.py                                                                                                           
+-a----        14-11-2026      2:22            382 asgi.py                                                                                                           
+-a----        14-11-2026      2:22         159744 db.sqlite3                                                                                                        
+-a----        14-11-2026      2:22           1290 forms.py                                                                                                          
+-a----        14-11-2026      2:25           1477 Instrucciones.txt                                                                                                 
+-a----        14-11-2026      2:22            749 manage.py                                                                                                         
+-a----        14-11-2026      2:22           1731 models.py                                                                                                         
+-a----        14-11-2026      2:22           2516 poblar.py                                                                                                         
+-a----        14-11-2026      2:22           3514 settings.py                                                                                                       
+-a----        14-11-2026      2:22             60 tests.py                                                                                                          
+-a----        14-11-2026      2:22            931 urls.py                                                                                                           
+-a----        14-11-2026      2:22          11429 views.py                                                                                                          
+-a----        14-11-2026      2:22            382 wsgi.py                                                                                                           
+-a----        14-11-2026      2:22              0 __init__.py
+
+
+#Crear el entorno virtual en esta nueva carpeta
+PS C:\Users\Alumno\Desktop\Biblioteca_web-main\Biblioteca_web> uv venv
+Using CPython 3.15.2
+Creating virtual environment at: .venv
+Activate with: .venv\Scripts\activate
+
+PS C:\Users\Alumno\Desktop\Biblioteca_web-main\Biblioteca_web> uv pip install django psycopg[binary] python-dotenv dj-database-url
+Resolved 8 packages in 327ms
+Installed 8 packages in 5.97s
+ + asgiref==3.13.0
+ + dj-database-url==3.1.2
+ + django==6.1.3
+ + psycopg==3.3.9
+ + psycopg-binary==3.3.9
+ + python-dotenv==1.2.4
+ + sqlparse==0.6.1
+ + tzdata==2026.6
+
+.\.venv\Scripts\python.exe manage.py makemigrations
+.\.venv\Scripts\python.exe manage.py migrate
+
+.\.venv\Scripts\python.exe manage.py migrate Biblioteca_web 0002 --fake
+
+.\.venv\Scripts\python.exe manage.py migrate
+.\.venv\Scripts\python.exe manage.py runserver 8001
+
+
+CREAR CUENTA (DATOS)
+Email: estudiante@inacapmail.cl
+RUT: 20123456-7 (El del Excel)
+Nombre: Estudiante Prueba
+Carrera: Informática
+Contraseña: Inacap.2026 (La del Excel)
+
+CREAR CUENTA NUEVA (DATOS)
+Al Intentar registrar estudiante@inacapmail.cl de nuevo, deberia aparecer un campo diciendo:
+"Este correo ya está registrado"
+Para continuar con las pruebas, hay que registrar nuevos DATOS.
+Correo: nuevo_estudiante@inacapmail.cl
+RUT: 11111111-1
+Nombre: Prueba Test
+Carrera: Informática
+Contraseña: Inacap.2026

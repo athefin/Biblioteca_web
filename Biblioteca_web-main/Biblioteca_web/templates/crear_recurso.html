@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block titulo %}Nuevo recurso{% endblock %}
+
+{% block estilos %}
+<style>
+  /* Opciones de estado: la elegida queda con borde negro */
+  .chip--estado input:checked + span { background: #fff; color: var(--negro); border: 2px solid var(--negro); }
+  .chip--estado span { padding-left: 15px; }
+
+  .previa { background: var(--superficie); border: 1px solid var(--borde); border-radius: 10px; padding: 18px; margin: 26px 0 28px; }
+  .previa > small { display: block; margin-bottom: 14px; font-size: 12.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--gris-texto); }
+  .previa .equipo { width: 96px; }
+  .previa .sala { width: 190px; padding: 15px 16px 17px; }
+  .previa .sala.libre { border: 2px solid var(--rojo); }
+  .previa .sala h3 { font-family: var(--f-titulo); font-weight: 700; font-size: 25px; line-height: 1.05; margin-bottom: 12px; }
+</style>
+{% endblock %}
+
+{% block contenido %}
+<a class="volver" href="{% url 'lista_recursos' %}"><svg class="ic"><use href="#i-flecha-izq"/></svg>Volver a disponibilidad</a>
+<h1 class="titulo titulo--form">Agregar recurso</h1>
+<p class="bajada bajada--form">Registra un computador o una sala de estudio. Aparecerá de inmediato en la pantalla de disponibilidad del portal.</p>
+
+{% if form.non_field_errors %}<div class="alerta">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+
+<form method="post" class="pasos">
+  {% csrf_token %}
+
+  <!-- Paso 1: tipo e identificador -->
+  <section class="tarjeta paso">
+    <h2 class="paso__titulo"><span class="paso__num">1</span>Identifica el recurso</h2>
+
+    <div class="campo">
+      <span class="campo__etiqueta">Tipo de recurso</span>
+      <div class="chips">
+        {% for valor, etiqueta in form.fields.tipo.choices %}
+          {% if valor %}
+          <label class="chip">
+            <input type="radio" name="{{ form.tipo.html_name }}" value="{{ valor }}" required {% if form.tipo.value == valor %}checked{% endif %}>
+            <span><svg class="ic"><use href="#i-check"/></svg>{{ etiqueta }}</span>
+          </label>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% for error in form.tipo.errors %}<p class="error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="campo">
+      <label for="{{ form.identificador.id_for_label }}">Número de equipo o sala</label>
+      <input type="text" name="{{ form.identificador.html_name }}" id="{{ form.identificador.id_for_label }}" class="form-control" maxlength="{{ form.identificador.field.max_length }}" placeholder="P1 001" required value="{{ form.identificador.value|default_if_none:'' }}">
+      <p class="ayuda">Para computadores usa piso y número, por ejemplo P1 001 o P2 015. Para salas, Sala 1, Sala 2, etc.</p>
+      {% for error in form.identificador.errors %}<p class="error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <p class="nota-info"><svg class="ic"><use href="#i-info"/></svg>Con ese formato el equipo aparece solo en la grilla de su piso.</p>
+  </section>
+
+  <!-- Paso 2: estado y guardar -->
+  <section class="tarjeta paso">
+    <h2 class="paso__titulo"><span class="paso__num">2</span>Estado actual</h2>
+
+    <div class="campo">
+      <span class="campo__etiqueta">¿Cómo está ahora?</span>
+      <div class="chips">
+        {% for valor, etiqueta in form.fields.estado.choices %}
+        <label class="chip chip--estado">
+          <input type="radio" name="{{ form.estado.html_name }}" value="{{ valor }}" required {% if form.estado.value == valor %}checked{% endif %}>
+          <span><i class="muestra {% if valor == 'DISPONIBLE' %}libre{% elif valor == 'OCUPADO' %}en-uso{% else %}fuera{% endif %}"></i>{{ etiqueta }}</span>
+        </label>
+        {% endfor %}
+      </div>
+      {% for error in form.estado.errors %}<p class="error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="previa">
+      <small>Así se verá en disponibilidad</small>
+      <div class="equipo libre" id="previa-equipo">P1 001</div>
+      <article class="tarjeta sala libre" id="previa-sala" hidden>
+        <h3 id="previa-sala-nombre">Sala 1</h3>
+        <span class="etiqueta et-roja" id="previa-sala-estado">Disponible</span>
+      </article>
+    </div>
+
+    <div class="acciones">
+      <button type="submit" class="btn btn-primario"><svg class="ic"><use href="#i-guardar"/></svg>Guardar recurso</button>
+      <a class="btn btn-borde" href="{% url 'lista_recursos' %}">Cancelar</a>
+    </div>
+  </section>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Vista previa: muestra el cuadro (computador) o la tarjeta (sala) con el estado elegido
+  (function () {
+    var identificador = document.getElementById('id_identificador');
+    var equipo = document.getElementById('previa-equipo');
+    var sala = document.getElementById('previa-sala');
+    var clases = { DISPONIBLE: 'libre', OCUPADO: 'en-uso', MANTENCION: 'fuera' };
+    var etiquetas = {
+      DISPONIBLE: ['et-roja', 'Disponible'],
+      OCUPADO: ['et-uso', 'Ocupada'],
+      MANTENCION: ['et-naranjo', 'En mantención']
+    };
+
+    function actualizar() {
+      var tipo = document.querySelector('input[name="tipo"]:checked');
+      var estado = document.querySelector('input[name="estado"]:checked');
+      var valorEstado = estado ? estado.value : 'DISPONIBLE';
+      var esSala = tipo && tipo.value === 'SALA';
+      var texto = identificador.value.trim();
+
+      equipo.hidden = esSala;
+      sala.hidden = !esSala;
+      equipo.textContent = texto || 'P1 001';
+      equipo.className = 'equipo ' + clases[valorEstado];
+
+      document.getElementById('previa-sala-nombre').textContent = texto || 'Sala 1';
+      sala.className = 'tarjeta sala' + (valorEstado === 'DISPONIBLE' ? ' libre' : '');
+      var etiqueta = document.getElementById('previa-sala-estado');
+      etiqueta.className = 'etiqueta ' + etiquetas[valorEstado][0];
+      etiqueta.textContent = etiquetas[valorEstado][1];
+    }
+
+    identificador.addEventListener('input', actualizar);
+    document.querySelectorAll('input[name="tipo"], input[name="estado"]').forEach(function (radio) {
+      radio.addEventListener('change', actualizar);
+    });
+    actualizar();
+  })();
+</script>
+{% endblock %}

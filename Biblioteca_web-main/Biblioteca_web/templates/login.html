@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Iniciar Sesión · Biblioteca INACAP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+  <style>
+    :root {
+      --rojo: #cc0000;
+      --rojo-hover: #b00000;
+      --rojo-halo: #f5cccc;
+      --negro: #1a1a1a;
+      --gris-texto: #5e5e5e;
+      --borde: #dcdcdc;
+      --fondo: #f2f2f2;
+      --f-texto: "Barlow", system-ui, sans-serif;
+      --f-titulo: "Barlow Condensed", sans-serif;
+      --f-mono: "IBM Plex Mono", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; background: var(--fondo); color: var(--negro);
+      font-family: var(--f-texto); display: grid; place-items: center; padding: 24px;
+    }
+    .login-caja {
+      width: min(480px, 100%); background: #fff; border: 1px solid var(--borde);
+      border-radius: 16px; padding: 32px; box-shadow: 0 10px 30px rgba(0,0,0,.06);
+    }
+    .marca { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .marca__logo {
+      width: 44px; height: 44px; border-radius: 9px; background: var(--rojo); color: #fff;
+      display: grid; place-items: center; font-weight: 700; font-size: 22px;
+    }
+    .marca__texto strong { display: block; font-family: var(--f-titulo); font-size: 26px; line-height: 1; }
+    .marca__texto small { color: var(--gris-texto); font-size: 14px; }
+    h1 { font-family: var(--f-titulo); font-size: 34px; margin: 0 0 6px; }
+    .bajada { color: var(--gris-texto); font-size: 15px; margin: 0 0 22px; }
+
+    /* Selector de 3 alternativas (Roles) */
+    .roles-titulo { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--gris-texto); margin-bottom: 10px; display: block; }
+    .roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 22px; }
+    .rol { position: relative; }
+    .rol input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+    .rol__caja {
+      border: 1.5px solid var(--borde); border-radius: 10px; padding: 14px 8px;
+      text-align: center; cursor: pointer; transition: all .15s; background: #fafafa;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .rol__icono { font-size: 22px; }
+    .rol__nombre { font-size: 13.5px; font-weight: 600; line-height: 1.15; }
+    .rol input:checked + .rol__caja {
+      background: #fff5f5; border-color: var(--rojo); color: var(--rojo);
+      box-shadow: 0 0 0 3px var(--rojo-halo);
+    }
+
+    .campo { margin-bottom: 18px; }
+    .campo label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 7px; }
+    .form-control {
+      width: 100%; height: 46px; padding: 0 14px; border: 1.5px solid #cfcfcf;
+      border-radius: 8px; font-size: 15.5px; font-family: inherit;
+    }
+    .form-control:focus { outline: none; border-color: var(--rojo); }
+    .btn-entrar {
+      width: 100%; height: 48px; background: var(--rojo); color: #fff; border: 0;
+      border-radius: 8px; font-size: 16.5px; font-weight: 600; cursor: pointer; margin-top: 6px;
+    }
+    .btn-entrar:hover { background: var(--rojo-hover); }
+    .alerta {
+      background: #fdeeee; border: 1px solid #f1c4c4; color: #8f0000;
+      padding: 12px 14px; border-radius: 9px; margin-bottom: 18px; font-size: 14.5px; font-weight: 500;
+    }
+    .credenciales-demo {
+      margin-top: 24px; padding-top: 18px; border-top: 1px dashed var(--borde);
+      font-size: 13px; color: var(--gris-texto);
+    }
+    .credenciales-demo strong { color: var(--negro); display: block; margin-bottom: 8px; }
+    .cred-item {
+      display: flex; justify-content: space-between; background: #f6f6f6;
+      padding: 6px 10px; border-radius: 6px; margin-bottom: 5px; font-family: var(--f-mono); font-size: 12px;
+      cursor: pointer; border: 1px solid transparent;
+    }
+    .cred-item:hover { border-color: var(--rojo); background: #fff5f5; }
+  </style>
+</head>
+<body>
+
+  <div class="login-caja">
+    <div class="marca">
+      <div class="marca__logo">📚</div>
+      <div class="marca__texto">
+        <strong>Biblioteca INACAP</strong>
+        <small>Sistema de Gestión y Reportes</small>
+      </div>
+    </div>
+
+    <h1>Bienvenido/a</h1>
+    <p class="bajada">Selecciona tu perfil e ingresa tus credenciales institucionales.</p>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alerta">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      
+      <span class="roles-titulo">1. Elige tu perfil de acceso</span>
+      <div class="roles">
+        <label class="rol">
+          <input type="radio" name="rol" value="Estudiante" checked>
+          <span class="rol__caja">
+            <span class="rol__icono">🎓</span>
+            <span class="rol__nombre">Estudiante</span>
+          </span>
+        </label>
+        <label class="rol">
+          <input type="radio" name="rol" value="Administrativo">
+          <span class="rol__caja">
+            <span class="rol__icono">🏛️</span>
+            <span class="rol__nombre">Admin. Biblioteca</span>
+          </span>
+        </label>
+        <label class="rol">
+          <input type="radio" name="rol" value="Soporte TI">
+          <span class="rol__caja">
+            <span class="rol__icono">🛠️</span>
+            <span class="rol__nombre">Soporte TI</span>
+          </span>
+        </label>
+      </div>
+
+      <div class="campo">
+        <label for="correo">2. Correo institucional</label>
+        <input type="email" id="correo" name="correo" class="form-control" placeholder="ejemplo@inacapmail.cl" required>
+      </div>
+
+      <div class="campo">
+        <label for="password">3. Contraseña</label>
+        <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+      </div>
+
+      <button type="submit" class="btn-entrar">Ingresar al Sistema</button>
+
+      <div style="text-align: center; margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 20px;">
+        <p>¿Eres estudiante y no tienes cuenta?</p>
+        <a href="{% url 'registro' %}" class="btn-entrar" style="display: block; text-decoration: none; line-height: 48px; background: #1a1a1a;">Regístrate aquí</a>
+      </div>
+
+    </form>
+
+    <!-- Cuentas de prueba listas (si haces clic en una se autorrellena el formulario) -->
+    <div class="credenciales-demo">
+      <strong>💡 Cuentas de prueba (Haz clic en una para autocompletar):</strong>
+      <div class="cred-item" onclick="llenar('Estudiante', 'estudiante@inacapmail.cl', '1234')">
+        <span>🎓 Estudiante: estudiante@inacapmail.cl</span>
+        <span>Clave: 1234</span>
+      </div>
+      <div class="cred-item" onclick="llenar('Administrativo', 'admin@inacap.cl', '1234')">
+        <span>🏛️ Admin: admin@inacap.cl</span>
+        <span>Clave: 1234</span>
+      </div>
+      <div class="cred-item" onclick="llenar('Soporte TI', 'ti@inacap.cl', '1234')">
+        <span>🛠️ Soporte TI: ti@inacap.cl</span>
+        <span>Clave: 1234</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function llenar(rol, correo, clave) {
+      document.querySelector('input[name="rol"][value="' + rol + '"]').checked = true;
+      document.getElementById('correo').value = correo;
+      document.getElementById('password').value = clave;
+    }
+  </script>
+</body>
+</html>

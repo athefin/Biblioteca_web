@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block titulo %}Estudiantes{% endblock %}
+
+{% block estilos %}
+<style>
+  .tabla .avatar { width: 36px; height: 36px; font-size: 15px; }
+  .col-reportes { width: 160px; }
+  .alerta-ok { background: #dcfce7; color: #166534; border: 1px solid #86efac; padding: 14px 18px; border-radius: 10px; margin-bottom: 18px; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block contenido %}
+<div data-filtrable>
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alerta-ok">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <header class="encabezado">
+    <div>
+      <p class="antetitulo">Administración · {% now "l j \d\e F" %}</p>
+      <h1 class="titulo">Estudiantes</h1>
+      <p class="bajada">Estudiantes registrados que pueden reportar fallas en la biblioteca</p>
+    </div>
+    <div class="encabezado__acciones">
+      <div class="buscador">
+        <label for="buscar">Buscar estudiante</label>
+        <div class="buscador__campo">
+          <svg class="ic"><use href="#i-buscar"/></svg>
+          <input id="buscar" type="search" placeholder="Nombre, RUT o carrera" data-buscar>
+        </div>
+      </div>
+      <a class="btn btn-primario" href="{% url 'crear_estudiante' %}"><svg class="ic"><use href="#i-usuario-mas"/></svg>Agregar estudiante</a>
+    </div>
+  </header>
+
+  {% regroup estudiantes|dictsort:"carrera" by carrera as carreras %}
+  <div class="filtros">
+    <button type="button" class="filtro activo" data-filtro="todos">Todos <span class="cuenta">{{ estudiantes|length }}</span></button>
+    {% for carrera in carreras %}
+    <button type="button" class="filtro" data-filtro="{{ carrera.grouper|slugify }}">{{ carrera.grouper }} <span class="cuenta">{{ carrera.list|length }}</span></button>
+    {% endfor %}
+  </div>
+
+  <section class="tarjeta tabla-tarjeta">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Estudiante</th>
+          <th>RUT</th>
+          <th>Carrera</th>
+          <th class="col-reportes">Reportes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in estudiantes|dictsort:"nombre" %}
+        <tr data-fila data-grupo="{{ e.carrera|slugify }}">
+          <td>
+            <div class="persona">
+              <span class="avatar">{{ e.nombre|first|upper }}</span>
+              <strong>{{ e.nombre }}</strong>
+            </div>
+          </td>
+          <td class="mono">{{ e.rut }}</td>
+          <td>{{ e.carrera }}</td>
+          <td>
+            {% with total=e.reporteincidencia_set.count %}
+              {% if total %}<span class="etiqueta et-gris">{{ total }} reporte{{ total|pluralize }}</span>
+              {% else %}<span class="etiqueta et-borde">Sin reportes</span>{% endif %}
+            {% endwith %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="vacio">Todavía no hay estudiantes registrados. <a href="{% url 'crear_estudiante' %}">Agregar el primero</a></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="tabla-pie">
+      <span>Mostrando <span data-mostrando>{{ estudiantes|length }}</span> estudiantes</span>
+      <span>Ordenados por nombre</span>
+    </div>
+  </section>
+</div>
+{% endblock %}

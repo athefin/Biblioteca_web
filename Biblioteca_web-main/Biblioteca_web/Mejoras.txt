@@ -1,0 +1,52 @@
+MEJORAS Y CORRECCIONES
+
+---------------------------------------------------------
+1. NUEVOS MODELOS Y ACTUALIZACIONES (models.py)
+- Agregué el modelo "Libro" (titulo, autor) para que los estudiantes puedan ver un catálogo y dejar reseñas.
+- MODIFICACIÓN IMPORTANTE en el modelo "Reseña" lo cambié a una llave foránea que apunta al nuevo modelo Libro.
+- El modelo "Estudiante" ahora está vinculado con el sistema de usuarios de Django (campo "user"), lo que permite que cada estudiante que inicia sesión se asocie a su perfil real.
+
+---------------------------------------------------------
+2. NUEVOS FORMULARIOS Y VISTAS (forms.py y views.py)
+- Registro de estudiantes: Agregué el formulario "RegistroEstudianteForm" y la vista "registro_estudiante". Cualquier persona puede crear su cuenta desde la página de Login.
+- Reservas por formulario: Agregué "ReservaForm" y la vista "crear_reserva" para que el estudiante pueda seleccionar la fecha y hora exacta de su reserva, no solo hacer clic en un botón.
+- Sistema de Reseñas: Agregué las vistas "crear_resena" y "eliminar_resena" (para que el creador de la reseña o un admin pueda borrarla).
+- Catálogo de Libros: Agregué la vista "lista_libros" para renderizar el catálogo.
+
+---------------------------------------------------------
+3. CORRECCIONES DE SEGURIDAD Y LÓGICA (BACKEND)
+- Reportes automáticos: Modifiqué "crear_reporte" para que el estudiante NO tenga que seleccionarse a sí mismo en una lista. El sistema ahora lo asigna automáticamente usando su sesión.
+- Límite de reservas: Ahora un estudiante solo puede tener UNA reserva activa a la vez. Si intenta reservar otra sala, el sistema lo bloquea con un mensaje de error.
+- Liberación segura: Modifiqué la vista "liberar_recurso" para que un estudiante solo pueda liberar el equipo o sala que él mismo reservó. (Evita que liberen salas de otros).
+- Filtro de lenguaje ofensivo: En la vista de reseñas, agregué un filtro que bloquea palabras como "basura" o "tonto" para pasar la prueba CP-E08.
+
+---------------------------------------------------------
+4. NUEVAS PLANTILLAS (Carpeta templates/)
+- registro.html: Para crear la cuenta nueva.
+- crear_reserva.html: Para elegir fecha y hora de la reserva.
+- crear_resena.html: Formulario para escribir la reseña.
+- lista_libros.html: El catálogo visual de libros con el contador de reseñas y el botón de borrar (si son dueños o admins).
+- base.html: Agregué el botón "Catálogo de Libros" en el menú lateral del estudiante.
+- Login.html: Agregué el botón de "Regístrate aquí".
+
+---------------------------------------------------------
+5. CONFIGURACIÓN Y RUTAS (settings.py y urls.py)
+- Arreglé el settings.py: Agregué LOGIN_URL = 'login' para evitar el error "Page not found /accounts/login/". También agregué la ruta de la carpeta templates ('DIRS': [BASE_DIR / 'templates']).
+- Agregué todas las rutas nuevas en urls.py y limpié las rutas duplicadas que tenían.
+
+---------------------------------------------------------
+PASOS PARA QUE LES FUNCIONE EN SUS COMPUTADORAS
+Como agregué un modelo nuevo (Libro) y cambié la estructura de Reseña, deben hacer esto al descargar mis cambios:
+1. Abran la terminal y ejecuten: 
+   .\.venv\Scripts\python.exe manage.py makemigrations
+   .\.venv\Scripts\python.exe manage.py migrate
+
+   *OJO:* Como cambiamos el campo "libro" de Reseña de texto a número, es probable que Django les pregunte qué hacer. Elijan la opción 1 (Provide a one-off default now) y escriban un número (ej: 1). Si les da error de base de datos, simplemente borren la tabla de reseñas en Supabase o en el admin y vuelvan a correr el migrate.
+
+2. Para llenar la base de datos con libros de prueba, vayan a la URL:
+   http://127.0.0.1:8001/poblar/
+
+3. Si quieren probar el nuevo diseño del catálogo, vayan a:
+   http://127.0.0.1:8001/libros/
+
+¡Cualquier duda que tengan del código me escriben! Ya probé todo el flujo de Estudiante y funciona perfecto para el Excel.
