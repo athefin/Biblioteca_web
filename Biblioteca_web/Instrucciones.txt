@@ -1,10 +1,91 @@
-Preparar el entorno
-uv venv
-uv pip install django psycopg[binary] python-dotenv
+======================================================================
 
-Preparar la base de datos
-.\.venv\Scripts\python.exe manage.py makemigrations
-.\.venv\Scripts\python.exe manage.py migrate
+INSTRUCCIONES DE EJECUCIÓN: SISTEMA DE GESTIÓN DE BIBLIOTECA (DJANGO)
 
-Arrancar el servidor
-\.venv\Scripts\python.exe manage.py runserver 8001
+======================================================================
+
+
+
+Estimado profesor, para levantar y probar correctamente el sistema 
+
+en su entorno local, por favor siga los siguientes pasos desde su terminal:
+
+
+
+1. CLONAR E INGRESAR AL DIRECTORIO RAÍZ DEL PROYECTO
+
+   Clone el repositorio y navegue a través de la estructura de carpetas 
+
+   anidadas hasta ubicar el archivo 'manage.py':
+
+   
+
+   git clone https://github.com/athefin/Biblioteca_web.git
+
+   cd Biblioteca_web/Biblioteca_web/Biblioteca_web
+
+
+
+
+
+2. CREAR Y ACTIVAR EL ENTORNO VIRTUAL
+
+   Se recomienda aislar las dependencias creando un entorno virtual:
+
+
+
+   - En Windows (PowerShell):
+
+     python -m venv venv
+
+     venv\Scripts\Activate
+
+
+
+   - En macOS / Linux:
+
+     python3 -m venv venv
+
+     source venv/bin/activate
+
+
+
+
+
+3. INSTALAR DEPENDENCIAS (SI APLICA)
+
+   Asegúrese de tener Django instalado en el entorno virtual:
+
+   
+
+   pip install django
+
+
+
+
+
+4. APLICAR MIGRACIONES DE LA BASE DE DATOS
+
+   Ejecute el comando para configurar la base de datos local (SQLite):
+
+   
+
+   python manage.py migrate
+
+
+
+
+
+5. EJECUTAR EL SERVIDOR DE DESARROLLO
+
+   Inicie el servidor local de Django:
+
+   
+
+   python manage.py runserver
+
+
+
+   Una vez ejecutado, abra su navegador web e ingrese a la dirección:
+
+   http://127.0.0.1:8000/
